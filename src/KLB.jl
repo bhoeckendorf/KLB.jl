@@ -14,6 +14,10 @@ function readheader(
                 (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
                 filepath, imagesize, datatype, sampling, blocksize, compressiontype, metadata)
 
+  if errid != 0
+    error("Could not read KLB header of file '$filepath'. Error code $errid")
+  end
+
   header = Dict{String, Any}()
   header["imagesize"] = imagesize
   header["imagesize"] = imagesize
