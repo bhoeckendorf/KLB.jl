@@ -10,9 +10,9 @@ function readheader(
   compressiontype = Cint[-1]
   metadata = repeat(" ", 256)
 
-  retval = ccall( (:readKLBheader, "klb"), Int32,
-                 (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
-                 filepath, imagesize, datatype, sampling, blocksize, compressiontype, metadata)
+  errid = ccall( (:readKLBheader, "klb"), Cint,
+                (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
+                filepath, imagesize, datatype, sampling, blocksize, compressiontype, metadata)
 
   println(imagesize)
   println(blocksize)
