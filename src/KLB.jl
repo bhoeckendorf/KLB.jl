@@ -6,8 +6,8 @@ function readheader(
   imagesize = zeros(Uint32, 5)
   blocksize = zeros(Uint32, 5)
   sampling = ones(Float32, 5)
-  datatype = Cint[0]
-  compressiontype = Cint[0]
+  datatype = Cint[-1]
+  compressiontype = Cint[-1]
   metadata = repeat(" ", 256)
 
   retval = ccall( (:readKLBheader, "klb"), Int32,
