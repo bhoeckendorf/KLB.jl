@@ -10,7 +10,7 @@ function readheader(
   compressiontype = Cint[0]
   metadata = repeat(" ", 256)
 
-  retval = ccall( (:readKLBheader, "./libklb.so"), Int32,
+  retval = ccall( (:readKLBheader, "klb"), Int32,
                  (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
                  filepath, imagesize, datatype, sampling, blocksize, compressiontype, metadata)
 
@@ -34,7 +34,7 @@ function readimage(
   compressiontype = Cint[0]
   metadata = repeat(" ", 256)
 
-  voidptr = ccall( (:readKLBstack, "./libklb.so"), Ptr{Void},
+  voidptr = ccall( (:readKLBstack, "klb"), Ptr{Void},
                   (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Cint, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
                   filepath, imagesize, datatype, numthreads, sampling, blocksize, compressiontype, metadata)
 
