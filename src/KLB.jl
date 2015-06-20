@@ -14,12 +14,15 @@ function readheader(
                 (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
                 filepath, imagesize, datatype, sampling, blocksize, compressiontype, metadata)
 
-  println(imagesize)
-  println(blocksize)
-  println(sampling)
-  println(datatype)
-  println(compressiontype)
-  println(metadata)
+  header = Dict{String, Any}()
+  header["imagesize"] = imagesize
+  header["imagesize"] = imagesize
+  header["blocksize"] = blocksize
+  header["sampling"] = sampling
+  header["metadata"] = strip(metadata)
+  header["datatype"] = datatype[1]
+  header["compressiontype"] = compressiontype[1]
+  return header
 end
 
 
