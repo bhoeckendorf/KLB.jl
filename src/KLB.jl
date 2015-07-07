@@ -24,10 +24,12 @@ function readheader(
   header = Dict{String, Any}()
   header["imagesize"] = imagesize
   header["blocksize"] = blocksize
-  header["sampling"] = sampling
+  header["pixelspacing"] = sampling
   header["metadata"] = strip(metadata)
-  header["datatype"] = datatype[1]
+  header["datatype"] = juliatype(datatype[1])
   header["compressiontype"] = compressiontype[1]
+  header["spatialorder"] = ["x", "y", "z"]
+  header["timedim"] = 5
   return header
 end
 
@@ -48,49 +50,45 @@ function readimage(
                   filepath, imagesize, datatype, numthreads, sampling, blocksize, compressiontype, metadata)
 
   header = Dict{String, Any}()
-  header["imagesize"] = imagesize
+  #header["imagesize"] = imagesize
   header["blocksize"] = blocksize
-  header["sampling"] = sampling
+  header["pixelspacing"] = sampling
   header["metadata"] = strip(metadata)
-  header["datatype"] = datatype[1]
+  #header["datatype"] = juliatype(datatype[1])
   header["compressiontype"] = compressiontype[1]
+  header["spatialorder"] = ["x", "y", "z"]
+  header["timedim"] = 5
 
-  arr = None
-  if datatype[1] == 0
-    typedptr = convert(Ptr{Uint8}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 1
-    typedptr = convert(Ptr{Uint16}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 2
-    typedptr = convert(Ptr{Uint32}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 3
-    typedptr = convert(Ptr{Uint64}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 4
-    typedptr = convert(Ptr{Int8}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 5
-    typedptr = convert(Ptr{Int16}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 6
-    typedptr = convert(Ptr{Int32}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 7
-    typedptr = convert(Ptr{Int64}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 8
-    typedptr = convert(Ptr{Float32}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  elseif datatype[1] == 9
-    typedptr = convert(Ptr{Float64}, voidptr)
-    arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-  else
-    return None
-  end
+  typedptr = convert( Ptr{ juliatype(datatype[1]) }, voidptr )
+  arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
 
   return Image(arr, header)
+end
+
+
+function juliatype( klbtype::Integer )
+  if klbtype == 0
+    return Uint8
+  elseif klbtype == 1
+    return Uint16
+  elseif klbtype == 2
+    return Uint32
+  elseif klbtype == 3
+    return Uint64
+  elseif klbtype == 4
+    return Int8
+  elseif klbtype == 5
+    return Int16
+  elseif klbtype == 6
+    return Int32
+  elseif klbtype == 7
+    return Int64
+  elseif klbtype == 8
+    return Float32
+  elseif klbtype == 9
+    return Float64
+  end
+  error( "Unknown or unsupported data type of KLB array: $klbtype" )
 end
 
 end # module
