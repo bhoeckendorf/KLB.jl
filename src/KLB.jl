@@ -66,6 +66,22 @@ function readimage(
 end
 
 
+function readarray(
+    filepath::String,
+    numthreads::Integer=1
+    )
+  imagesize = zeros(Uint32, 5)
+  datatype = Cint[-1]
+
+  voidptr = ccall( (:readKLBstack, "klb"), Ptr{Void},
+                  (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Cint, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
+                  filepath, imagesize, datatype, numthreads, C_NULL, C_NULL, C_NULL, C_NULL)
+
+  typedptr = convert( Ptr{ juliatype(datatype[1]) }, voidptr )
+  return pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
+end
+
+
 function juliatype( klbtype::Integer )
   if klbtype == 0
     return Uint8
