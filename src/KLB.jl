@@ -29,7 +29,8 @@ function readheader(
   header["datatype"] = juliatype(datatype[1])
   header["compressiontype"] = compressiontype[1]
   header["spatialorder"] = ["x", "y", "z"]
-  header["timedim"] = 5
+  header["colordim"] = 4
+  header["timedim"]  = 5
   return header
 end
 
@@ -57,7 +58,8 @@ function readimage(
   #header["datatype"] = juliatype(datatype[1])
   header["compressiontype"] = compressiontype[1]
   header["spatialorder"] = ["x", "y", "z"]
-  header["timedim"] = 5
+  header["colordim"] = 4
+  header["timedim"]  = 5
 
   typedptr = convert( Ptr{ juliatype(datatype[1]) }, voidptr )
   arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
