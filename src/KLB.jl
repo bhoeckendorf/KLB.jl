@@ -49,7 +49,7 @@ function readarray(
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
   end
-  
+
   return A
 end
 
@@ -70,6 +70,32 @@ function readarray!(
 
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
+  end
+end
+
+
+function writearray(
+    filepath::AbstractString,
+    A::Array,
+    numthreads::Integer=1
+    ;
+    pixelspacing=C_NULL,
+    blocksize=C_NULL,
+    compressiontype=C_NULL,
+    metadata=C_NULL
+    )
+  datatype = klbtype(eltype(A))
+  imagesize = UInt32[i for i in size(A)]
+  while length(imagesize) < 5
+    push!(imagesize, 1)
+  end
+
+  errid = ccall( (:writeKLBstack, "klb"), Cint,
+    (Ptr{Void}, Cstring, Ptr{UInt32}, Cint, Cint, Ptr{Float32}, Ptr{UInt32}, Cint, Ptr{Cchar}),
+    A, filepath, imagesize, datatype, numthreads, pixelspacing, blocksize, compressiontype, metadata)
+
+  if errid != 0
+    error("Could not write KLB file '$filepath'. Error code $errid")
   end
 end
 
