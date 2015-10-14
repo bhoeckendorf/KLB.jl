@@ -1,33 +1,30 @@
 module KLB
 
-using Images
-
-
 function readheader(
-    filepath::String
+    filepath::AbstractString
     )
-  imagesize = zeros(Uint32, 5)
-  blocksize = zeros(Uint32, 5)
-  sampling = ones(Float32, 5)
-  datatype = Cint[-1]
-  compressiontype = Cint[-1]
+  imagesize = zeros(UInt32, 5)
+  blocksize = zeros(UInt32, 5)
+  pixelspacing = ones(Float32, 5)
+  datatype = Ref{Cint}(-1)
+  compressiontype = Ref{Cint}(-1)
   metadata = repeat(" ", 256)
 
   errid = ccall( (:readKLBheader, "klb"), Cint,
-                (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
-                filepath, imagesize, datatype, sampling, blocksize, compressiontype, metadata)
+    (Cstring, Ptr{UInt32}, Ref{Cint}, Ptr{Float32}, Ptr{UInt32}, Ref{Cint}, Ptr{Cchar}),
+    filepath, imagesize, datatype, pixelspacing, blocksize, compressiontype, metadata)
 
   if errid != 0
     error("Could not read KLB header of file '$filepath'. Error code $errid")
   end
-
-  header = Dict{String, Any}()
-  header["imagesize"] = imagesize
-  header["blocksize"] = blocksize
-  header["pixelspacing"] = sampling
+  
+  header = Dict{AbstractString, Any}()
+  header["imagesize"] = round(Int, imagesize)
+  header["blocksize"] = round(Int, blocksize)
+  header["pixelspacing"] = pixelspacing
   header["metadata"] = strip(metadata)
-  header["datatype"] = juliatype(datatype[1])
-  header["compressiontype"] = compressiontype[1]
+  header["datatype"] = juliatype(datatype[])
+  header["compressiontype"] = compressiontype[]
   header["spatialorder"] = ["x", "y", "z"]
   header["colordim"] = 4
   header["timedim"]  = 5
@@ -35,64 +32,57 @@ function readheader(
 end
 
 
-function readimage(
-    filepath::String,
+function readarray(
+    filepath::AbstractString,
     numthreads::Integer=1
     )
-  imagesize = zeros(Uint32, 5)
-  blocksize = zeros(Uint32, 5)
-  sampling = ones(Float32, 5)
-  datatype = Cint[-1]
-  compressiontype = Cint[-1]
-  metadata = repeat(" ", 256)
+  header = readheader(filepath)
+  imagesize = header["imagesize"]
+  jtype = header["datatype"]
+  ktype = Ref{Cint}( klbtype(jtype) )
 
-  voidptr = ccall( (:readKLBstack, "klb"), Ptr{Void},
-                  (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Cint, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
-                  filepath, imagesize, datatype, numthreads, sampling, blocksize, compressiontype, metadata)
+  A = Array(jtype, imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5])
+  errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
+    (Cstring, Ptr{Void}, Ref{Cint}, Cint),
+    filepath, A, ktype, numthreads)
 
-  header = Dict{String, Any}()
-  #header["imagesize"] = imagesize
-  header["blocksize"] = blocksize
-  header["pixelspacing"] = sampling
-  header["metadata"] = strip(metadata)
-  #header["datatype"] = juliatype(datatype[1])
-  header["compressiontype"] = compressiontype[1]
-  header["spatialorder"] = ["x", "y", "z"]
-  header["colordim"] = 4
-  header["timedim"]  = 5
-
-  typedptr = convert( Ptr{ juliatype(datatype[1]) }, voidptr )
-  arr = pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
-
-  return Image(arr, header)
+  if errid != 0
+    error("Could not read KLB file '$filepath'. Error code $errid")
+  end
+  
+  return A
 end
 
 
-function readarray(
-    filepath::String,
+function readarray!(
+    A::Array,
+    filepath::AbstractString,
     numthreads::Integer=1
     )
-  imagesize = zeros(Uint32, 5)
-  datatype = Cint[-1]
+  header = readheader(filepath)
+  assert( header["imagesize"] == size(A) )
+  assert( header["datatype"] == eltype(A) )
+  
+  ktype = Ref{Cint}( klbtype(jtype) )
+  errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
+    (Cstring, Ptr{Void}, Ref{Cint}, Cint),
+    filepath, A, ktype, numthreads)
 
-  voidptr = ccall( (:readKLBstack, "klb"), Ptr{Void},
-                  (Ptr{Uint8}, Ptr{Uint32}, Ptr{Cint}, Cint, Ptr{Float32}, Ptr{Uint32}, Ptr{Cint}, Ptr{Uint8}),
-                  filepath, imagesize, datatype, numthreads, C_NULL, C_NULL, C_NULL, C_NULL)
-
-  typedptr = convert( Ptr{ juliatype(datatype[1]) }, voidptr )
-  return pointer_to_array(typedptr, (imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5]), true)
+  if errid != 0
+    error("Could not read KLB file '$filepath'. Error code $errid")
+  end
 end
 
 
 function juliatype( klbtype::Integer )
   if klbtype == 0
-    return Uint8
+    return UInt8
   elseif klbtype == 1
-    return Uint16
+    return UInt16
   elseif klbtype == 2
-    return Uint32
+    return UInt32
   elseif klbtype == 3
-    return Uint64
+    return UInt64
   elseif klbtype == 4
     return Int8
   elseif klbtype == 5
@@ -107,6 +97,32 @@ function juliatype( klbtype::Integer )
     return Float64
   end
   error( "Unknown or unsupported data type of KLB array: $klbtype" )
+end
+
+
+function klbtype( juliatype::Type )
+  if juliatype == UInt8
+    return 0
+  elseif juliatype == UInt16
+    return 1
+  elseif juliatype == UInt32
+    return 2
+  elseif juliatype == UInt64
+    return 3
+  elseif juliatype == Int8
+    return 4
+  elseif juliatype == Int16
+    return 5
+  elseif juliatype == Int32
+    return 6
+  elseif juliatype == Int64
+    return 7
+  elseif juliatype == Float32
+    return 8
+  elseif juliatype == Float64
+    return 9
+  end
+  error( "Unknown or unsupported data type of KLB array: $juliatype" )
 end
 
 end # module
