@@ -84,6 +84,68 @@ function readarray!(
 end
 
 
+function readarray(
+    filepath::AbstractString,
+    lower_bounds::Vector{UInt32},
+    upper_bounds::Vector{UInt32},
+    numthreads::Integer=1
+    )
+  header = readheader(filepath)
+  jtype = header["datatype"]
+  ktype = Ref{Cint}( klbtype(jtype) )
+  lb = lower_bounds - 1
+  ub = upper_bounds - 1
+  roisize = 1 + ub - lb
+  A = Array(jtype, roisize[1], roisize[2], roisize[3], roisize[4], roisize[5])
+
+  errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
+    (Cstring, Ptr{Void}, Ref{Cint}, Ptr{UInt32}, Ptr{UInt32}, Cint),
+    filepath, A, ktype, lb, ub, numthreads)
+
+  if errid != 0
+    error("Could not read KLB file '$filepath'. Error code $errid")
+  end
+
+  return A
+end
+
+
+function readarray!(
+    A::Array,
+    filepath::AbstractString,
+    lower_bounds::Vector{UInt32},
+    upper_bounds::Vector{UInt32},
+    numthreads::Integer=1
+    ;
+    nochecks::Bool=false
+    )
+  header = readheader(filepath)
+  jtype = header["datatype"]
+  ktype = Ref{Cint}( klbtype(jtype) )
+  lb = lower_bounds - 1
+  ub = upper_bounds - 1
+
+  if !nochecks
+    assert( jtype == eltype(A) )
+    assert( ndims(A) < 6 )
+    roisize = 1 + ub - lb
+    for d in 1:5
+      assert( roisize[d] == size(A, d) )
+    end
+  end
+
+  errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
+    (Cstring, Ptr{Void}, Ref{Cint}, Ptr{UInt32}, Ptr{UInt32}, Cint),
+    filepath, A, ktype, lb, ub, numthreads)
+
+  if errid != 0
+    error("Could not read KLB file '$filepath'. Error code $errid")
+  end
+
+  return A
+end
+
+
 function writearray(
     filepath::AbstractString,
     A::Array,
