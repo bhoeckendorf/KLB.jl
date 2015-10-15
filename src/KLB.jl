@@ -61,14 +61,10 @@ function readarray!(
     ;
     nochecks::Bool=false
     )
-  header = readheader(filepath)
-  jtype = header["datatype"]
-  ktype = Ref{Cint}( klbtype(jtype) )
-
   if !nochecks
+    header = readheader(filepath)
+    assert( header["datatype"] == eltype(A) )
     imagesize = header["imagesize"]
-    assert( jtype == eltype(A) )
-    assert( ndims(A) < 6 )
     for d in 1:5
       assert( imagesize[d] == size(A, d) )
     end
@@ -76,7 +72,7 @@ function readarray!(
 
   errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
     (Cstring, Ptr{Void}, Ref{Cint}, Cint),
-    filepath, A, ktype, numthreads)
+    filepath, A, Ref{Cint}(0), numthreads)
 
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
@@ -119,15 +115,12 @@ function readarray!(
     ;
     nochecks::Bool=false
     )
-  header = readheader(filepath)
-  jtype = header["datatype"]
-  ktype = Ref{Cint}( klbtype(jtype) )
   lb = lower_bounds - 1
   ub = upper_bounds - 1
 
   if !nochecks
-    assert( jtype == eltype(A) )
-    assert( ndims(A) < 6 )
+    header = readheader(filepath)
+    assert( header["datatype"] == eltype(A) )
     roisize = 1 + ub - lb
     for d in 1:5
       assert( roisize[d] == size(A, d) )
@@ -136,7 +129,7 @@ function readarray!(
 
   errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
     (Cstring, Ptr{Void}, Ref{Cint}, Ptr{UInt32}, Ptr{UInt32}, Cint),
-    filepath, A, ktype, lb, ub, numthreads)
+    filepath, A, Ref{Cint}(0), lb, ub, numthreads)
 
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
