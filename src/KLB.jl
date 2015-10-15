@@ -6,13 +6,13 @@ function readheader(
   imagesize = zeros(UInt32, 5)
   blocksize = zeros(UInt32, 5)
   pixelspacing = ones(Float32, 5)
-  datatype = Ref{Cint}(-1)
+  ktype = Ref{Cint}(-1)
   compressiontype = Ref{Cint}(-1)
   metadata = repeat(" ", 256)
 
   errid = ccall( (:readKLBheader, "klb"), Cint,
     (Cstring, Ptr{UInt32}, Ref{Cint}, Ptr{Float32}, Ptr{UInt32}, Ref{Cint}, Ptr{Cchar}),
-    filepath, imagesize, datatype, pixelspacing, blocksize, compressiontype, metadata)
+    filepath, imagesize, ktype, pixelspacing, blocksize, compressiontype, metadata)
 
   if errid != 0
     error("Could not read KLB header of file '$filepath'. Error code $errid")
@@ -23,7 +23,7 @@ function readheader(
   header["blocksize"] = round(Int, blocksize)
   header["pixelspacing"] = pixelspacing
   header["metadata"] = strip(metadata)
-  header["datatype"] = juliatype(datatype[])
+  header["datatype"] = juliatype(ktype[])
   header["compressiontype"] = compressiontype[]
   header["spatialorder"] = ["x", "y", "z"]
   header["colordim"] = 4
@@ -40,8 +40,8 @@ function readarray(
   imagesize = header["imagesize"]
   jtype = header["datatype"]
   ktype = Ref{Cint}( klbtype(jtype) )
-
   A = Array(jtype, imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5])
+
   errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
     (Cstring, Ptr{Void}, Ref{Cint}, Cint),
     filepath, A, ktype, numthreads)
@@ -58,12 +58,22 @@ function readarray!(
     A::Array,
     filepath::AbstractString,
     numthreads::Integer=1
+    ;
+    nochecks::Bool=false
     )
   header = readheader(filepath)
-  assert( header["imagesize"] == size(A) )
-  assert( header["datatype"] == eltype(A) )
-  
+  jtype = header["datatype"]
   ktype = Ref{Cint}( klbtype(jtype) )
+
+  if !nochecks
+    imagesize = header["imagesize"]
+    assert( jtype == eltype(A) )
+    assert( ndims(A) < 6 )
+    for d in 1:5
+      assert( imagesize[d] == size(A, d) )
+    end
+  end
+
   errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
     (Cstring, Ptr{Void}, Ref{Cint}, Cint),
     filepath, A, ktype, numthreads)
@@ -84,7 +94,7 @@ function writearray(
     compressiontype=C_NULL,
     metadata=C_NULL
     )
-  datatype = klbtype(eltype(A))
+  ktype = klbtype(eltype(A))
   imagesize = UInt32[i for i in size(A)]
   while length(imagesize) < 5
     push!(imagesize, 1)
@@ -92,7 +102,7 @@ function writearray(
 
   errid = ccall( (:writeKLBstack, "klb"), Cint,
     (Ptr{Void}, Cstring, Ptr{UInt32}, Cint, Cint, Ptr{Float32}, Ptr{UInt32}, Cint, Ptr{Cchar}),
-    A, filepath, imagesize, datatype, numthreads, pixelspacing, blocksize, compressiontype, metadata)
+    A, filepath, imagesize, ktype, numthreads, pixelspacing, blocksize, compressiontype, metadata)
 
   if errid != 0
     error("Could not write KLB file '$filepath'. Error code $errid")
