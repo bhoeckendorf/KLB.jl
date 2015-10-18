@@ -37,14 +37,11 @@ function readarray(
     numthreads::Integer=1
     )
   header = readheader(filepath)
-  imagesize = header["imagesize"]
-  jtype = header["datatype"]
-  ktype = Ref{Cint}( klbtype(jtype) )
-  A = Array(jtype, imagesize[1], imagesize[2], imagesize[3], imagesize[4], imagesize[5])
+  A = Array(header["datatype"], header["imagesize"]...)
 
   errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
     (Cstring, Ptr{Void}, Ref{Cint}, Cint),
-    filepath, A, ktype, numthreads)
+    filepath, A, Ref{Cint}(0), numthreads)
 
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
@@ -55,7 +52,7 @@ end
 
 
 function readarray!(
-    A::Array,
+    A::AbstractArray,
     filepath::AbstractString,
     numthreads::Integer=1
     ;
@@ -87,16 +84,14 @@ function readarray(
     numthreads::Integer=1
     )
   header = readheader(filepath)
-  jtype = header["datatype"]
-  ktype = Ref{Cint}( klbtype(jtype) )
   lb = lower_bounds - 1
   ub = upper_bounds - 1
   roisize = 1 + ub - lb
-  A = Array(jtype, roisize[1], roisize[2], roisize[3], roisize[4], roisize[5])
+  A = Array(header["datatype"], roisize...)
 
   errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
     (Cstring, Ptr{Void}, Ref{Cint}, Ptr{UInt32}, Ptr{UInt32}, Cint),
-    filepath, A, ktype, lb, ub, numthreads)
+    filepath, A, Ref{Cint}(0), lb, ub, numthreads)
 
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
@@ -107,7 +102,7 @@ end
 
 
 function readarray!(
-    A::Array,
+    A::AbstractArray,
     filepath::AbstractString,
     lower_bounds::Vector{UInt32},
     upper_bounds::Vector{UInt32},
@@ -141,7 +136,7 @@ end
 
 function writearray(
     filepath::AbstractString,
-    A::Array,
+    A::AbstractArray,
     numthreads::Integer=1
     ;
     pixelspacing=C_NULL,
