@@ -18,17 +18,16 @@ function readheader(
     error("Could not read KLB header of file '$filepath'. Error code $errid")
   end
   
-  header = Dict{AbstractString, Any}()
-  header["imagesize"] = round(Int, imagesize)
-  header["blocksize"] = round(Int, blocksize)
-  header["pixelspacing"] = pixelspacing
-  header["metadata"] = strip(metadata)
-  header["datatype"] = juliatype(ktype[])
-  header["compressiontype"] = compressiontype[]
-  header["spatialorder"] = ["x", "y", "z"]
-  header["colordim"] = 4
-  header["timedim"]  = 5
-  return header
+  return Dict{AbstractString, Any}(
+    "imagesize" => round(Int, imagesize),
+    "blocksize" => round(Int, blocksize),
+    "pixelspacing" => pixelspacing,
+    "metadata" => strip(metadata),
+    "datatype" => juliatype(ktype[]),
+    "compressiontype" => compressiontype[],
+    "spatialorder" => ["x", "y", "z"],
+    "colordim" => 4,
+    "timedim" => 5)
 end
 
 
