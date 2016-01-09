@@ -89,8 +89,8 @@ function readarray(
   A = Array(header["datatype"], roisize...)
 
   errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
-    (Cstring, Ptr{Void}, Ref{Cint}, Ptr{UInt32}, Ptr{UInt32}, Cint),
-    filepath, A, Ref{Cint}(0), lb, ub, numthreads)
+    (Cstring, Ptr{Void}, Ptr{UInt32}, Ptr{UInt32}, Cint),
+    filepath, A, lb, ub, numthreads)
 
   if errid != 0
     error("Could not read KLB file '$filepath'. Error code $errid")
