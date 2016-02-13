@@ -18,7 +18,7 @@ function readheader(
     error("Could not read KLB header of file '$filepath'. Error code $errid")
   end
   
-  return Dict{AbstractString, Any}(
+  Dict{AbstractString, Any}(
     "imagesize" => round(Int, imagesize),
     "blocksize" => round(Int, blocksize),
     "pixelspacing" => pixelspacing,
@@ -33,7 +33,7 @@ end
 
 function readarray(
     filepath::AbstractString,
-    numthreads::Integer=1
+    numthreads::Int=CPU_CORES
     )
   header = readheader(filepath)
   A = Array(header["datatype"], header["imagesize"]...)
@@ -46,14 +46,14 @@ function readarray(
     error("Could not read KLB file '$filepath'. Error code $errid")
   end
 
-  return A
+  A
 end
 
 
 function readarray!(
     A::AbstractArray,
     filepath::AbstractString,
-    numthreads::Integer=1
+    numthreads::Int=CPU_CORES
     ;
     nochecks::Bool=false
     )
@@ -80,7 +80,7 @@ function readarray(
     filepath::AbstractString,
     lower_bounds::Vector{UInt32},
     upper_bounds::Vector{UInt32},
-    numthreads::Integer=1
+    numthreads::Int=CPU_CORES
     )
   header = readheader(filepath)
   lb = lower_bounds - 1
@@ -96,7 +96,7 @@ function readarray(
     error("Could not read KLB file '$filepath'. Error code $errid")
   end
 
-  return A
+  A
 end
 
 
@@ -105,7 +105,7 @@ function readarray!(
     filepath::AbstractString,
     lower_bounds::Vector{UInt32},
     upper_bounds::Vector{UInt32},
-    numthreads::Integer=1
+    numthreads::Int=CPU_CORES
     ;
     nochecks::Bool=false
     )
@@ -129,14 +129,14 @@ function readarray!(
     error("Could not read KLB file '$filepath'. Error code $errid")
   end
 
-  return A
+  A
 end
 
 
 function writearray(
     filepath::AbstractString,
     A::AbstractArray,
-    numthreads::Integer=1
+    numthreads::Int=CPU_CORES
     ;
     pixelspacing=C_NULL,
     blocksize=C_NULL,
@@ -159,7 +159,7 @@ function writearray(
 end
 
 
-function juliatype( klbtype::Integer )
+function juliatype( klbtype::Cint )
   if klbtype == 0
     return UInt8
   elseif klbtype == 1
