@@ -1,8 +1,45 @@
 module KLB
 
-function readheader(
-    filepath::AbstractString
+using FileIO
+
+export klbheader, loadklb, loadklb!
+
+
+function FileIO.load(
+    file::File{format"KLB"}
+    ;
+    bounds::Array{UInt32} = UInt32[0],
+    numthreads::Int = CPU_CORES,
+    inplace::AbstractArray = UInt8[0],
+    nochecks::Bool = false
     )
+    if length(bounds) != 1
+        if length(inplace) != 1
+            loadklb!(inplace, filename(file), bounds[:,1], bounds[:,2], numthreads=numthreads, nochecks=nochecks)
+        else
+            loadklb(filename(file), bounds[:,1], bounds[:,2], numthreads=numthreads)
+        end
+    else
+        if length(inplace) != 1
+            loadklb!(inplace, filename(file), numthreads=numthreads, nochecks=nochecks)
+        else
+            loadklb(filename(file), numthreads=numthreads)
+        end
+    end
+end
+
+
+function FileIO.save(
+    file::File{format"KLB"},
+    A::AbstractArray
+    ;
+    numthreads::Int = CPU_CORES
+    )
+    writearray(filename(file), A, numthreads)
+end
+
+
+function klbheader( file::AbstractString )
     imagesize = zeros(UInt32, 5)
     blocksize = zeros(UInt32, 5)
     pixelspacing = ones(Float32, 5)
@@ -12,7 +49,7 @@ function readheader(
 
     errid = ccall( (:readKLBheader, "klb"), Cint,
         (Cstring, Ptr{UInt32}, Ref{Cint}, Ptr{Float32}, Ptr{UInt32}, Ref{Cint}, Ptr{Cchar}),
-        filepath, imagesize, ktype, pixelspacing, blocksize, compressiontype, metadata)
+        file, imagesize, ktype, pixelspacing, blocksize, compressiontype, metadata)
 
     if errid != 0
         error("Could not read KLB header of file '$filepath'. Error code $errid")
@@ -31,33 +68,27 @@ function readheader(
 end
 
 
-function readarray(
-    filepath::AbstractString,
+function loadklb(
+    file::AbstractString
+    ;
     numthreads::Int = CPU_CORES
     )
-    header = readheader(filepath)
+    header = klbheader(file)
     A = Array(header["datatype"], header["imagesize"]...)
-
-    errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
-        (Cstring, Ptr{Void}, Ref{Cint}, Cint),
-        filepath, A, Ref{Cint}(0), numthreads)
-
-    if errid != 0
-        error("Could not read KLB file '$filepath'. Error code $errid")
-    end
+    loadklb!(A, file, numthreads=numthreads, nochecks=true)
     A
 end
 
 
-function readarray!(
+function loadklb!(
     A::AbstractArray,
-    filepath::AbstractString,
-    numthreads::Int = CPU_CORES
+    file::AbstractString
     ;
+    numthreads::Int = CPU_CORES,
     nochecks::Bool = false
     )
     if !nochecks
-        header = readheader(filepath)
+        header = klbheader(file)
         assert( header["datatype"] == eltype(A) )
         imagesize = header["imagesize"]
         for d in 1:5
@@ -67,7 +98,7 @@ function readarray!(
 
     errid = ccall( (:readKLBstackInPlace, "klb"), Cint,
         (Cstring, Ptr{Void}, Ref{Cint}, Cint),
-        filepath, A, Ref{Cint}(0), numthreads)
+        file, A, Ref{Cint}(0), numthreads)
 
     if errid != 0
         error("Could not read KLB file '$filepath'. Error code $errid")
@@ -75,43 +106,35 @@ function readarray!(
 end
 
 
-function readarray(
-    filepath::AbstractString,
+function loadklb(
+    file::AbstractString,
     lower_bounds::Vector{UInt32},
-    upper_bounds::Vector{UInt32},
+    upper_bounds::Vector{UInt32}
+    ;
     numthreads::Int = CPU_CORES
     )
-    header = readheader(filepath)
-    lb = lower_bounds - 1
-    ub = upper_bounds - 1
-    roisize = 1 + ub - lb
+    header = klbheader(file)
+    roisize = 1 + upper_bounds - lower_bounds
     A = Array(header["datatype"], roisize...)
-
-    errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
-        (Cstring, Ptr{Void}, Ptr{UInt32}, Ptr{UInt32}, Cint),
-        filepath, A, lb, ub, numthreads)
-
-    if errid != 0
-        error("Could not read KLB file '$filepath'. Error code $errid")
-    end
+    loadklb!(A, file, lower_bounds, upper_bounds, numthreads=numthreads, nochecks=true)
     A
 end
 
 
-function readarray!(
+function loadklb!(
     A::AbstractArray,
-    filepath::AbstractString,
+    file::AbstractString,
     lower_bounds::Vector{UInt32},
-    upper_bounds::Vector{UInt32},
-    numthreads::Int = CPU_CORES
+    upper_bounds::Vector{UInt32}
     ;
+    numthreads::Int = CPU_CORES,
     nochecks::Bool = false
     )
     lb = lower_bounds - 1
     ub = upper_bounds - 1
 
     if !nochecks
-        header = readheader(filepath)
+        header = klbheader(file)
         assert( header["datatype"] == eltype(A) )
         roisize = 1 + ub - lb
         for d in 1:5
@@ -121,7 +144,7 @@ function readarray!(
 
     errid = ccall( (:readKLBroiInPlace, "klb"), Cint,
         (Cstring, Ptr{Void}, Ptr{UInt32}, Ptr{UInt32}, Cint),
-        filepath, A, lb, ub, numthreads)
+        file, A, lb, ub, numthreads)
 
     if errid != 0
         error("Could not read KLB file '$filepath'. Error code $errid")
