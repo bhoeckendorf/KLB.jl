@@ -52,7 +52,7 @@ function klbheader( file::AbstractString )
         file, imagesize, ktype, pixelspacing, blocksize, compressiontype, metadata)
 
     if errid != 0
-        error("Could not read KLB header of file '$filepath'. Error code $errid")
+        error("Could not read KLB header of file '$file'. Error code $errid")
     end
 
     Dict{AbstractString, Any}(
@@ -101,7 +101,7 @@ function loadklb!(
         file, A, Ref{Cint}(0), numthreads)
 
     if errid != 0
-        error("Could not read KLB file '$filepath'. Error code $errid")
+        error("Could not read KLB file '$file'. Error code $errid")
     end
 end
 
@@ -147,7 +147,7 @@ function loadklb!(
         file, A, lb, ub, numthreads)
 
     if errid != 0
-        error("Could not read KLB file '$filepath'. Error code $errid")
+        error("Could not read KLB file '$file'. Error code $errid")
     end
     A
 end
@@ -174,7 +174,7 @@ function writearray(
         A, filepath, imagesize, ktype, numthreads, pixelspacing, blocksize, compressiontype, metadata)
 
     if errid != 0
-        error("Could not write KLB file '$filepath'. Error code $errid")
+        error("Could not write KLB file '$file'. Error code $errid")
     end
 end
 
