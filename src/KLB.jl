@@ -160,7 +160,7 @@ function writearray(
     ;
     pixelspacing = C_NULL,
     blocksize = C_NULL,
-    compressiontype = C_NULL,
+    compressiontype::Int = 1,
     metadata = C_NULL
     )
     ktype = klbtype(eltype(A))
