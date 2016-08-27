@@ -130,8 +130,8 @@ function loadklb!(
     numthreads::Int = CPU_CORES,
     nochecks::Bool = false
     )
-    lb = lower_bounds - 1
-    ub = upper_bounds - 1
+    lb = lower_bounds - UInt32(1)
+    ub = upper_bounds - UInt32(1)
 
     if !nochecks
         header = klbheader(file)
@@ -174,7 +174,7 @@ function writearray(
         A, filepath, imagesize, ktype, numthreads, pixelspacing, blocksize, compressiontype, metadata)
 
     if errid != 0
-        error("Could not write KLB file '$file'. Error code $errid")
+        error("Could not write KLB file '$filepath'. Error code $errid")
     end
 end
 
