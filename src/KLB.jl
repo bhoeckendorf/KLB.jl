@@ -4,6 +4,8 @@ using FileIO
 
 export klbheader, loadklb, loadklb!
 
+add_format(format"KLB", (), ".klb")
+
 
 function FileIO.load(
     file::File{format"KLB"}
