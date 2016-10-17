@@ -11,7 +11,7 @@ function FileIO.load(
     file::File{format"KLB"}
     ;
     bounds::Array{UInt32} = UInt32[0],
-    numthreads::Int = CPU_CORES,
+    numthreads::Int = Sys.CPU_CORES,
     inplace::AbstractArray = UInt8[0],
     nochecks::Bool = false
     )
@@ -35,7 +35,7 @@ function FileIO.save(
     file::File{format"KLB"},
     A::AbstractArray
     ;
-    numthreads::Int = CPU_CORES
+    numthreads::Int = Sys.CPU_CORES
     )
     writearray(filename(file), A, numthreads)
 end
@@ -73,7 +73,7 @@ end
 function loadklb(
     file::AbstractString
     ;
-    numthreads::Int = CPU_CORES
+    numthreads::Int = Sys.CPU_CORES
     )
     header = klbheader(file)
     A = Array(header["datatype"], header["imagesize"]...)
@@ -86,7 +86,7 @@ function loadklb!(
     A::AbstractArray,
     file::AbstractString
     ;
-    numthreads::Int = CPU_CORES,
+    numthreads::Int = Sys.CPU_CORES,
     nochecks::Bool = false
     )
     if !nochecks
@@ -113,7 +113,7 @@ function loadklb(
     lower_bounds::Vector{UInt32},
     upper_bounds::Vector{UInt32}
     ;
-    numthreads::Int = CPU_CORES
+    numthreads::Int = Sys.CPU_CORES
     )
     header = klbheader(file)
     roisize = 1 + upper_bounds - lower_bounds
@@ -129,7 +129,7 @@ function loadklb!(
     lower_bounds::Vector{UInt32},
     upper_bounds::Vector{UInt32}
     ;
-    numthreads::Int = CPU_CORES,
+    numthreads::Int = Sys.CPU_CORES,
     nochecks::Bool = false
     )
     lb = lower_bounds - UInt32(1)
@@ -158,7 +158,7 @@ end
 function writearray(
     filepath::AbstractString,
     A::AbstractArray,
-    numthreads::Int = CPU_CORES
+    numthreads::Int = Sys.CPU_CORES
     ;
     pixelspacing = C_NULL,
     blocksize = C_NULL,
