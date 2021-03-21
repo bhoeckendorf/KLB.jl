@@ -2,9 +2,9 @@ using BinDeps
 
 @BinDeps.setup
 
-deps = [
-  klb = library_dependency("klb", runtime=true, aliases=["libklb.so", "klb.dll"])
-  ]
+klb = library_dependency("klb", runtime=true, aliases=["libklb.so", "klb.dll"])
+
+deps = [ klb ]
 
 @BinDeps.if_install begin
 
@@ -13,7 +13,7 @@ provides(Sources,
          )
 
 prefix = joinpath(BinDeps.depsdir(klb), "usr")
-uprefix = replace(replace(prefix,"\\","/"), "C:/", "/c/")
+uprefix = replace(replace(prefix,"\\" => "/"), "C:/" => "/c/")
 klbsrcdir   = joinpath(BinDeps.depsdir(klb), "src",    "klb")
 klbbuilddir = joinpath(BinDeps.depsdir(klb), "builds", "klb")
 
