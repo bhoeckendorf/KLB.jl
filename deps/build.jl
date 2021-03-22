@@ -1,3 +1,6 @@
+# Does not work
+#=
+
 using BinDeps
 
 @BinDeps.setup
@@ -26,3 +29,5 @@ println(klbbuilddir)
 println(joinpath(prefix, "lib", "libklb.dll"))
 
 end
+
+=#
