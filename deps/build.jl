@@ -6,11 +6,13 @@ klb = library_dependency("klb", runtime=true, aliases=["libklb.so", "klb.dll"])
 
 deps = [ klb ]
 
-@BinDeps.if_install begin
-
 provides(Sources,
-         { URI("https://bitbucket.org/fernandoamat/keller-lab-block-filetype/get/1796d6334bd3.zip") => klb }
+         [ URI("https://bitbucket.org/fernandoamat/keller-lab-block-filetype/get/1796d6334bd3.zip") ],
+         klb
          )
+
+@BinDeps.install begin
+
 
 prefix = joinpath(BinDeps.depsdir(klb), "usr")
 uprefix = replace(replace(prefix,"\\" => "/"), "C:/" => "/c/")
@@ -22,3 +24,5 @@ println(uprefix)
 println(klbsrcdir)
 println(klbbuilddir)
 println(joinpath(prefix, "lib", "libklb.dll"))
+
+end
