@@ -1,7 +1,7 @@
 name = "KLB"
 uuid = "8bb66c0d-974d-412d-8f46-f9b8d1ef37d0"
 authors = ["Mark Kittisopikul <kittisopikulm@janelia.hhmi.org>", "Burkhard Hoeckendorf, and contributors"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
@@ -10,6 +10,8 @@ Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [compat]
+BinDeps = "1.0.2"
+FileIO = "1.6.5"
 julia = "1"
 
 [extras]

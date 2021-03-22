@@ -7,7 +7,6 @@ import Base.convert
 
 export klbheader, loadklb, loadklb!, klbtype
 
-add_format(format"KLB", (), ".klb", [:KLB => UUID("8bb66c0d-974d-412d-8f46-f9b8d1ef37d0")])
 
 const KLB_DATA_DIMS = 5
 const DEFAULT_NUMTHREADS = Sys.CPU_THREADS ÷ 2
@@ -299,9 +298,10 @@ function __init__()
     if isempty(library_location)
         error("[lib]klb.$(Libdl.dlext) library could not be located in $klb_deps_folder or elsewhere.")
     else
-        # @info "$library_location.$(Libdl.dlext)"
+        @info "$library_location.$(Libdl.dlext)"
         Libdl.dlopen(library_location)
     end
+    add_format(format"KLB", (), ".klb", [:KLB => UUID("8bb66c0d-974d-412d-8f46-f9b8d1ef37d0")])
 end
 
 end # module
