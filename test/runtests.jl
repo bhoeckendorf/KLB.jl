@@ -57,7 +57,7 @@ KLB.loadklb!(A, testdata_filename, testdata_lower_bounds, testdata_upper_bounds)
 @test sum(A) != 0
 
 A = zeros(testdata_dtype, testdata_upper_bounds...)
-KLB.loadklb!(A, testdata_filename, (testdata_lower_bounds...), (testdata_upper_bounds...))
+KLB.loadklb!(A, testdata_filename, (testdata_lower_bounds...,), (testdata_upper_bounds...,))
 @test sum(A) != 0
 
 rm(testdata_filename)
